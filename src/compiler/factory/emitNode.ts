@@ -96,6 +96,15 @@ export function setEmitFlags<T extends Node>(node: T, emitFlags: EmitFlags): T {
 
 /**
  * Sets flags that control emit behavior of a node.
+ */
+export function removeEmitFlags<T extends Node>(node: T, emitFlags: EmitFlags): T {
+    const emitNode = getOrCreateEmitNode(node);
+    emitNode.flags = emitNode.flags & (~emitFlags);
+    return node;
+}
+
+/**
+ * Sets flags that control emit behavior of a node.
  *
  * @internal
  */

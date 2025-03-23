@@ -89,7 +89,8 @@ import {
     ParameterDeclaration,
     PropertyAccessExpression,
     PropertyDeclaration,
-    setEmitFlags,
+    addEmitFlags,
+    removeEmitFlags,
     SignatureDeclaration,
     some,
     SourceFile,
@@ -554,7 +555,9 @@ function withContext<T>(
             return;
         }
         const { typeNode } = inferType(func);
+
         if (typeNode) {
+            addEmitFlags(typeNode, EmitFlags.NoNestedComments);
             changeTracker.tryInsertTypeAnnotation(
                 sourceFile,
                 func,
@@ -1143,12 +1146,13 @@ function withContext<T>(
     }
 
     function typeToStringForDiag(node: Node) {
-        setEmitFlags(node, EmitFlags.SingleLine);
+        addEmitFlags(node, EmitFlags.SingleLine);
         const result = typePrinter.printNode(EmitHint.Unspecified, node, sourceFile);
         if (result.length > defaultMaximumTruncationLength) {
             return result.substring(0, defaultMaximumTruncationLength - "...".length) + "...";
         }
-        setEmitFlags(node, EmitFlags.None);
+        removeEmitFlags(node, EmitFlags.SingleLine);
+
         return result;
     }
 
