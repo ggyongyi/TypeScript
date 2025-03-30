@@ -9,6 +9,7 @@ import {
     typeToMinimizedReferenceType,
 } from "../_namespaces/ts.codefix.js";
 import {
+    addEmitFlags,
     ArrayBindingPattern,
     ArrayLiteralExpression,
     AssertionExpression,
@@ -555,6 +556,7 @@ function withContext<T>(
         }
         const { typeNode } = inferType(func);
         if (typeNode) {
+            setEmitFlags(typeNode, EmitFlags.NoNestedComments);
             changeTracker.tryInsertTypeAnnotation(
                 sourceFile,
                 func,
@@ -572,6 +574,7 @@ function withContext<T>(
         const { typeNode } = inferType(defaultExport.expression);
         if (!typeNode) return undefined;
         const defaultIdentifier = factory.createUniqueName("_default");
+        setEmitFlags(typeNode, EmitFlags.NoNestedComments);
         changeTracker.replaceNodeWithNodes(sourceFile, defaultExport, [
             factory.createVariableStatement(
                 /*modifiers*/ undefined,
@@ -607,6 +610,7 @@ function withContext<T>(
             return undefined;
         }
 
+        setEmitFlags(heritageTypeNode, EmitFlags.NoNestedComments);
         const baseClassName = factory.createUniqueName(
             classDecl.name ? classDecl.name.text + "Base" : "Anonymous",
             GeneratedIdentifierFlags.Optimistic,
@@ -1132,6 +1136,7 @@ function withContext<T>(
     function addTypeToVariableLike(decl: ParameterDeclaration | VariableDeclaration | PropertyDeclaration): DiagnosticOrDiagnosticAndArguments | undefined {
         const { typeNode } = inferType(decl);
         if (typeNode) {
+            setEmitFlags(typeNode, EmitFlags.NoNestedComments);
             if (decl.type) {
                 changeTracker.replaceNode(getSourceFileOfNode(decl), decl.type, typeNode);
             }
@@ -1143,12 +1148,13 @@ function withContext<T>(
     }
 
     function typeToStringForDiag(node: Node) {
-        setEmitFlags(node, EmitFlags.SingleLine);
+        const originalEmitFlags = node.emitNode?.flags;
+        addEmitFlags(node, EmitFlags.SingleLine);
         const result = typePrinter.printNode(EmitHint.Unspecified, node, sourceFile);
         if (result.length > defaultMaximumTruncationLength) {
             return result.substring(0, defaultMaximumTruncationLength - "...".length) + "...";
         }
-        setEmitFlags(node, EmitFlags.None);
+        setEmitFlags(node, originalEmitFlags || EmitFlags.None);
         return result;
     }
 
